@@ -340,11 +340,14 @@ body{background:#0a0a0f;color:#e8d5b7;font-family:'Hiragino Kaku Gothic Pro','�
 // ============================================================
 //  CONSTANTS & CONFIG
 // ============================================================
+// Grid: 20×15 tiles of 40px each → 800×600px canvas
+// UI_PANEL_W must stay in sync with the #ui-panel CSS width
 const TILE = 40;
 const COLS = 20;
 const ROWS = 15;
 const CW = COLS * TILE; // 800
 const CH = ROWS * TILE; // 600
+const UI_PANEL_W = 240; // matches #ui-panel CSS width
 
 const TOWER_CONFIG = {
   archer: {
@@ -853,7 +856,7 @@ const Game = (() => {
   // Canvas auto-scale
   function resizeCanvas() {
     const container = document.getElementById('canvas-container');
-    const panelW = 240;
+    const panelW = UI_PANEL_W;
     const availW = window.innerWidth - panelW;
     const availH = window.innerHeight;
     const scaleX = availW / CW;
@@ -1035,7 +1038,6 @@ const Game = (() => {
     lastTime = null;
     animId = requestAnimationFrame(loop);
   }
-  window.startGame = startGame;
 
   function nextWave() {
     if (state.waveActive || state.allWavesDone || state.gameOver) return;
@@ -1762,31 +1764,29 @@ const Game = (() => {
 // ============================================================
 //  SCREEN MANAGEMENT
 // ============================================================
+let _currentStageIdx = 0;
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'stage-screen') setupStageScreen();
 }
 window.showScreen = showScreen;
 
 function retryGame() {
-  startGame(Game._currentStageIdx !== undefined ? Game._currentStageIdx : 0);
+  startGame(_currentStageIdx);
 }
-window.retryGame = function() {
-  const gs = window._gameStateRef;
-  startGame(gs ? gs.stageIdx : 0);
-};
+window.retryGame = retryGame;
 
-// Patch startGame to store stageIdx
-const _origStart = window.startGame;
-window.startGame = function(idx) {
-  window._gameStateRef = { stageIdx: idx };
-  _origStart(idx);
-};
+function startGame(idx) {
+  _currentStageIdx = idx;
+  Game.startGame(idx);
+}
+window.startGame = startGame;
 
 function nextStage() {
-  const gs = window._gameStateRef;
-  if (gs && gs.stageIdx < STAGES.length - 1) {
-    startGame(gs.stageIdx + 1);
+  if (_currentStageIdx < STAGES.length - 1) {
+    startGame(_currentStageIdx + 1);
   } else {
     showScreen('stage-screen');
   }
@@ -1805,6 +1805,8 @@ window.confirmMenu = confirmMenu;
 // ============================================================
 function setupStageScreen() {
   const cleared = JSON.parse(localStorage.getItem('sengokuCleared') || '[]');
+  // Remove any previously added badges before re-adding
+  document.querySelectorAll('.stage-clear-badge').forEach(b => b.remove());
   STAGES.forEach((stage, idx) => {
     const card = document.getElementById('stage-card-' + idx);
     if (!card) return;
@@ -1824,13 +1826,6 @@ window.addEventListener('load', () => {
   Game.init();
   setupStageScreen();
 });
-
-// Re-setup stage screen when shown
-const origShowScreen = window.showScreen;
-window.showScreen = function(id) {
-  origShowScreen(id);
-  if (id === 'stage-screen') setupStageScreen();
-};
 </script>
 </body>
 </html>
