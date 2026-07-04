@@ -1109,8 +1109,6 @@ const Game = (() => {
     updateUI();
     updateNextWaveInfo();
   }
-  Game.nextWave = nextWave;
-
   function announceWave(n, total) {
     const el = document.getElementById('wave-announce');
     el.textContent = (n === total ? `⚔️ 最終ウェーブ！ ⚔️` : `〜 第${n}波 〜`);
@@ -1122,15 +1120,11 @@ const Game = (() => {
     state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 3 : 1;
     document.getElementById('btn-speed').textContent = '×' + state.speed;
   }
-  Game.toggleSpeed = toggleSpeed;
-
   function togglePause() {
     state.paused = !state.paused;
     document.getElementById('btn-pause').textContent = state.paused ? '▶ 再開' : '⏸ 一時停止';
     if (!state.paused) { lastTime = null; animId = requestAnimationFrame(loop); }
   }
-  Game.togglePause = togglePause;
-
   function upgradeTower() {
     if (!selectedTower) return;
     const uc = selectedTower.upgradeCost();
@@ -1142,8 +1136,6 @@ const Game = (() => {
     updateUI();
     updateSelectedInfo();
   }
-  Game.upgradeTower = upgradeTower;
-
   function sellTower() {
     if (!selectedTower) return;
     const val = selectedTower.sellValue();
@@ -1155,16 +1147,12 @@ const Game = (() => {
     playSound('sell');
     updateUI();
   }
-  Game.sellTower = sellTower;
-
   function cycleTarget() {
     if (!selectedTower) return;
     const idx = TARGET_MODES.indexOf(selectedTower.targetMode);
     selectedTower.targetMode = TARGET_MODES[(idx + 1) % TARGET_MODES.length];
     updateSelectedInfo();
   }
-  Game.cycleTarget = cycleTarget;
-
   // ---- Main Loop ----
   function loop(timestamp) {
     if (state.paused) return;
