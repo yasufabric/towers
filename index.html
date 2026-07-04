@@ -146,6 +146,50 @@ body{background:#0a0a0f;color:#e8d5b7;font-family:'Hiragino Kaku Gothic Pro','ãƒ
 #ui-panel::-webkit-scrollbar{width:4px}
 #ui-panel::-webkit-scrollbar-track{background:#111}
 #ui-panel::-webkit-scrollbar-thumb{background:#333}
+
+/* ===== MOBILE / TOUCH ===== */
+@media (max-width: 767px) {
+  /* Game screen: canvas top, panel below */
+  #game-screen{flex-direction:column}
+  #game-wrapper{flex-direction:column}
+  #canvas-container{width:100%;height:55svh;height:55vh;flex:none}
+  #ui-panel{width:100%;height:45svh;height:45vh;max-height:45vh;flex:none;border-left:none;border-top:2px solid #333;overflow-y:auto;flex-direction:row;flex-wrap:wrap;align-content:flex-start}
+  .ui-section{width:50%;box-sizing:border-box;padding:6px 8px}
+  /* Stats and controls sections take full row */
+  #next-wave-info{width:50%}
+  #shop-section{width:100%;padding:6px 8px}
+  #selected-info{width:100%;padding:6px 8px}
+  .tower-list{flex-direction:row;flex-wrap:wrap;gap:3px}
+  .tower-btn{width:calc(20% - 3px);min-height:44px;flex-direction:column;gap:2px;padding:4px;align-items:center;justify-content:center}
+  .tower-info{text-align:center}
+  .tower-detail{display:none}
+  /* Bigger touch targets */
+  .ctrl-btn{min-height:44px;padding:8px 2px;font-size:12px}
+  .action-btn{min-height:44px}
+  .menu-btn{min-height:44px}
+  /* Title screen */
+  .title-torii{font-size:56px}
+  .title-main{font-size:30px;letter-spacing:4px}
+  .title-sub{font-size:16px;letter-spacing:6px;margin-bottom:30px}
+  /* Stage select */
+  .stage-grid{flex-direction:column;align-items:center;gap:12px;margin-bottom:20px}
+  .stage-title{font-size:24px;letter-spacing:4px;margin-bottom:20px}
+  .stage-card{width:min(280px,80vw)}
+  /* Howto */
+  .howto-grid{grid-template-columns:1fr}
+  .howto-box{padding:20px 16px}
+  /* Result box */
+  .result-box{padding:24px 20px}
+  .result-title{font-size:30px;letter-spacing:4px}
+  .result-sub{font-size:14px}
+  .result-stats{gap:8px}
+  .result-btns{flex-wrap:wrap}
+}
+@media (max-width: 380px) {
+  .title-main{font-size:24px;letter-spacing:2px}
+  .ctrl-btn{font-size:11px}
+  .ui-section{width:50%}
+}
 </style>
 </head>
 <body>
@@ -855,10 +899,10 @@ const Game = (() => {
 
   // Canvas auto-scale
   function resizeCanvas() {
-    const container = document.getElementById('canvas-container');
-    const panelW = UI_PANEL_W;
+    const mobile = window.innerWidth < 768;
+    const panelW = mobile ? 0 : UI_PANEL_W;
     const availW = window.innerWidth - panelW;
-    const availH = window.innerHeight;
+    const availH = mobile ? Math.round(window.innerHeight * 0.55) : window.innerHeight;
     const scaleX = availW / CW;
     const scaleY = availH / CH;
     const scale = Math.min(scaleX, scaleY);
@@ -877,6 +921,9 @@ const Game = (() => {
     canvas.addEventListener('mousemove', onCanvasMouseMove);
     canvas.addEventListener('mouseleave', () => { hoverCell = null; });
     canvas.addEventListener('contextmenu', e => { e.preventDefault(); cancelPlace(); });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); onCanvasClick(e); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); onCanvasMouseMove(e); }, { passive: false });
+    canvas.addEventListener('touchend', e => { e.preventDefault(); hoverCell = null; }, { passive: false });
     resizeCanvas();
   }
 
@@ -884,9 +931,10 @@ const Game = (() => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = CW / rect.width;
     const scaleY = CH / rect.height;
+    const src = e.touches ? e.touches[0] : e;
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: (src.clientX - rect.left) * scaleX,
+      y: (src.clientY - rect.top) * scaleY
     };
   }
 
